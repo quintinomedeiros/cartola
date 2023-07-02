@@ -1,5 +1,6 @@
 import requests
 import pandas as pd
+import pandas.io.formats.style
 
 ref = 'api.cartolafc.globo.com/clubes'
 
@@ -12,4 +13,4 @@ else:
     print('Erro ao obter os dados da API: {}'.format(response.text))
 
 df_clubes = pd.DataFrame(data)
-print("Primeiras cinco linhas dos dados:\n{}".format(df_clubes.head()))
+pandas.io.formats.style.display_dataframe(df_clubes)
