@@ -1,8 +1,7 @@
 import requests
 import pandas as pd
-import pandas.io.formats.style
 
-ref = 'api.cartolafc.globo.com/clubes'
+ref = 'api.cartolafc.globo.com/atletas/pontuados'
 
 url = f'https://{ref}'
 response = requests.get(url)
@@ -12,5 +11,6 @@ if response.status_code == 200:
 else:
     print('Erro ao obter os dados da API: {}'.format(response.text))
 
-df_clubes = pd.DataFrame(data)
-pandas.io.formats.style.display_dataframe(df_clubes)
+df_atletas = pd.DataFrame(data)
+pd.set_option('display.max_colwidth', 10)
+print(df_atletas)
