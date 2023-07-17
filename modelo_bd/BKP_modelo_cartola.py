@@ -105,7 +105,13 @@ dados_partidas_df = pd.DataFrame.from_records(dados_partidas['partidas'])
 dados_times_clubes = []
 clubes = dados_times.get('clubes', {})
 for clube_id, clube_info in clubes.items():
-    dados_times_clubes.append(clube_info)
+    nome = clube_info.get('nome', '')
+    abreviacao = clube_info.get('abreviacao', '')
+    dados_times_clubes.append({
+        'clube_id': clube_id,
+        'nome': nome,
+        'abreviacao': abreviacao
+    })
 dados_times_df = pd.DataFrame(dados_times_clubes)
 
 tabelas = {

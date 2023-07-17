@@ -1,0 +1,24 @@
+{"atletas":
+	{"100084":
+		{"scout":
+			{"FC":1,
+			"FD":1,
+			"FF":2},
+		"apelido":"Igor Gomes",
+		"foto":"https://s.sde.globo.com/media/person_role/2023/03/31/photo_FORMATO_UzfIqe6.png",
+		"pontuacao":2.5,
+		"posicao_id":4,
+		"clube_id":282,
+		"entrou_em_campo":true},
+
+	"100103":
+		{"scout":
+			{"FF":1,
+			"FS":1},
+		"apelido":"Pedrinho",
+		"foto":"https://s.sde.globo.com/media/person_role/2023/07/04/photo_FORMATO_ougKVvu.png",
+		"pontuacao":1.3,
+		"posicao_id":5,
+		"clube_id":327,
+		"entrou_em_campo":true},
+...

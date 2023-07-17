@@ -4,6 +4,7 @@ from datetime import datetime
 
 base_url = 'https://api.cartolafc.globo.com'
 
+# Função para obter dados da API
 def obter_dados_api(endpoint):
     try:
         url = f'{base_url}/{endpoint}'
@@ -14,6 +15,7 @@ def obter_dados_api(endpoint):
         print('Erro ao obter os dados da API:', str(e))
         return None
 
+# Função para obter a última rodada já realizada
 def obter_rodada_atual(dados_rodadas):
     hoje = datetime.now().date()
     ultima_rodada = None
@@ -27,6 +29,7 @@ def obter_rodada_atual(dados_rodadas):
 
     return ultima_rodada + 1 if ultima_rodada is not None else 1
 
+# Função para obter as pontuações dos jogadores até a última rodada realizada
 def obter_pontuacoes_jogadores(rodadas):
     pontuacoes_jogadores = []
 
@@ -51,6 +54,7 @@ def obter_pontuacoes_jogadores(rodadas):
 
     return pontuacoes_jogadores
 
+# Função para obter os dados de destaque dos jogadores
 def obter_dados_destaque(dados_destaque, dados_times):
     dados_destaque_limpos = []
 
@@ -72,6 +76,7 @@ def obter_dados_destaque(dados_destaque, dados_times):
 
     return dados_destaque_limpos
 
+# Função para salvar as tabelas em um arquivo Excel
 def salvar_em_excel(tabelas, arquivo_excel):
     try:
         with pd.ExcelWriter(arquivo_excel) as writer:
@@ -95,7 +100,7 @@ pontuacoes_jogadores = obter_pontuacoes_jogadores(rodadas_anteriores)
 # Passo 3: Obter informações da próxima rodada, como destaques, partidas, times, etc.
 dados_destaque = obter_dados_api('mercado/destaques')
 dados_partidas = obter_dados_api(f'partidas/{rodada_atual}')
-dados_times = obter_dados_api('mercado/status')
+dados_times = obter_dados_api('atletas/mercado')
 
 # Passo 4: Organizar os dados em tabelas
 pontuacoes_jogadores_df = pd.DataFrame(pontuacoes_jogadores)[['atleta_id', 'apelido', 'posicao_id', 'clube_id', 'entrou_em_campo', 'rodada_id', 'CA', 'DS', 'FC', 'FF', 'FD', 'FS', 'I', 'SG', 'A', 'G', 'DE', 'GS', 'V', 'PS', 'FT', 'PP', 'DP', 'CV', 'PC', 'GC', 'pontuacao']]
@@ -105,8 +110,14 @@ dados_partidas_df = pd.DataFrame.from_records(dados_partidas['partidas'])
 dados_times_clubes = []
 clubes = dados_times.get('clubes', {})
 for clube_id, clube_info in clubes.items():
-    dados_times_clubes.append(clube_info)
-dados_times_df = pd.DataFrame(dados_times_clubes)
+    nome = clube_info.get('nome', '')
+    abreviacao = clube_info.get('abreviacao', '')
+    dados_times_clubes.append({
+        'clube_id': clube_id,
+        'nome': nome,
+        'abreviacao': abreviacao
+    })
+dados_times_df = pd.DataFrame(dados_times_clubes, columns=['clube_id', 'nome', 'abreviacao'])
 
 tabelas = {
     'Pontuações Jogadores': pontuacoes_jogadores_df,

@@ -4,6 +4,7 @@ from datetime import datetime
 
 base_url = 'https://api.cartolafc.globo.com'
 
+# Função para obter dados da API
 def obter_dados_api(endpoint):
     try:
         url = f'{base_url}/{endpoint}'
@@ -14,6 +15,7 @@ def obter_dados_api(endpoint):
         print('Erro ao obter os dados da API:', str(e))
         return None
 
+# Função para obter a última rodada já realizada
 def obter_rodada_atual(dados_rodadas):
     hoje = datetime.now().date()
     ultima_rodada = None
@@ -27,6 +29,7 @@ def obter_rodada_atual(dados_rodadas):
 
     return ultima_rodada + 1 if ultima_rodada is not None else 1
 
+# Função para obter as pontuações dos jogadores até a última rodada realizada
 def obter_pontuacoes_jogadores(rodadas):
     pontuacoes_jogadores = []
 
@@ -51,6 +54,7 @@ def obter_pontuacoes_jogadores(rodadas):
 
     return pontuacoes_jogadores
 
+# Função para obter os dados de destaque dos jogadores
 def obter_dados_destaque(dados_destaque, dados_times):
     dados_destaque_limpos = []
 
@@ -72,6 +76,33 @@ def obter_dados_destaque(dados_destaque, dados_times):
 
     return dados_destaque_limpos
 
+# Função para obter os dados de status dos jogadores
+def obter_dados_status(dados_times):
+    dados_status = dados_times.get('status', {})
+    status_info = []
+
+    for status_id, status in dados_status.items():
+        status_info.append({
+            'id': status.get('id', ''),
+            'nome': status.get('nome', '')
+        })
+
+    return status_info
+
+# Função para obter os dados de posições dos jogadores
+def obter_dados_posicoes(dados_times):
+    dados_posicoes = dados_times.get('posicoes', {})
+    posicoes_info = []
+
+    for posicao_id, posicao in dados_posicoes.items():
+        posicoes_info.append({
+            'id': posicao.get('id', ''),
+            'nome': posicao.get('nome', '')
+        })
+
+    return posicoes_info
+
+# Função para salvar as tabelas em um arquivo Excel
 def salvar_em_excel(tabelas, arquivo_excel):
     try:
         with pd.ExcelWriter(arquivo_excel) as writer:
@@ -95,7 +126,7 @@ pontuacoes_jogadores = obter_pontuacoes_jogadores(rodadas_anteriores)
 # Passo 3: Obter informações da próxima rodada, como destaques, partidas, times, etc.
 dados_destaque = obter_dados_api('mercado/destaques')
 dados_partidas = obter_dados_api(f'partidas/{rodada_atual}')
-dados_times = obter_dados_api('mercado/status')
+dados_times = obter_dados_api('atletas/mercado')
 
 # Passo 4: Organizar os dados em tabelas
 pontuacoes_jogadores_df = pd.DataFrame(pontuacoes_jogadores)[['atleta_id', 'apelido', 'posicao_id', 'clube_id', 'entrou_em_campo', 'rodada_id', 'CA', 'DS', 'FC', 'FF', 'FD', 'FS', 'I', 'SG', 'A', 'G', 'DE', 'GS', 'V', 'PS', 'FT', 'PP', 'DP', 'CV', 'PC', 'GC', 'pontuacao']]
@@ -105,14 +136,28 @@ dados_partidas_df = pd.DataFrame.from_records(dados_partidas['partidas'])
 dados_times_clubes = []
 clubes = dados_times.get('clubes', {})
 for clube_id, clube_info in clubes.items():
-    dados_times_clubes.append(clube_info)
-dados_times_df = pd.DataFrame(dados_times_clubes)
+    nome = clube_info.get('nome', '')
+    abreviacao = clube_info.get('abreviacao', '')
+    dados_times_clubes.append({
+        'clube_id': clube_id,
+        'nome': nome,
+        'abreviacao': abreviacao
+    })
+dados_times_df = pd.DataFrame(dados_times_clubes, columns=['clube_id', 'nome', 'abreviacao'])
+
+dados_status_info = obter_dados_status(dados_times)
+dados_status_df = pd.DataFrame(dados_status_info, columns=['id', 'nome'])
+
+dados_posicoes_info = obter_dados_posicoes(dados_times)
+dados_posicoes_df = pd.DataFrame(dados_posicoes_info, columns=['id', 'nome'])
 
 tabelas = {
     'Pontuações Jogadores': pontuacoes_jogadores_df,
     'Dados Destaque': dados_destaque_df,
     'Dados Partidas': dados_partidas_df,
-    'Dados Times': dados_times_df
+    'Dados Times': dados_times_df,
+    'Status': dados_status_df,
+    'Posições': dados_posicoes_df
 }
 
 # Passo 5: Salvar as tabelas em um arquivo Excel

@@ -28,7 +28,7 @@ def obter_rodada_atual(dados_rodadas):
         else:
             break
 
-    return ultima_rodada if ultima_rodada is not None else 1
+    return ultima_rodada + 1 if ultima_rodada is not None else 1
 
 # Função para obter as pontuações dos jogadores até a última rodada realizada
 def obter_pontuacoes_jogadores(rodadas):
@@ -123,7 +123,7 @@ dados_rodadas = obter_dados_api('rodadas')
 if dados_rodadas is None:
     exit(1)
 
-rodada_atual = obter_rodada_atual(dados_rodadas) + 1
+rodada_atual = obter_rodada_atual(dados_rodadas)
 
 # Passo 2: Obter as pontuações dos jogadores até a última rodada realizada
 rodadas_anteriores = range(1, rodada_atual)
@@ -131,50 +131,24 @@ pontuacoes_jogadores = obter_pontuacoes_jogadores(rodadas_anteriores)
 
 # Passo 3: Obter informações das rodadas finalizadas e da rodada atual, como destaques, partidas, times, etc.
 rodadas_finalizadas = [rodada['rodada_id'] for rodada in dados_rodadas if datetime.strptime(rodada['fim'], '%Y-%m-%d %H:%M:%S').date() < datetime.now().date()]
-ultima_rodada_finalizada = rodadas_finalizadas[-1] if rodadas_finalizadas else None
+todas_rodadas = rodadas_finalizadas + [rodada_atual]
 
 dados_destaque = obter_dados_api('mercado/destaques')
-dados_partidas_realizadas = []
-dados_partidas_atual = []
-
-for rodada in rodadas_finalizadas:
+dados_partidas = []
+for rodada in todas_rodadas:
     endpoint = f'partidas/{rodada}'
     data_partidas = obter_dados_api(endpoint)
     if data_partidas is not None and 'partidas' in data_partidas:
         for partida in data_partidas['partidas']:
             partida['rodada_id'] = rodada
-        dados_partidas_realizadas.extend(data_partidas['partidas'])
-
-if rodada_atual is not None and rodada_atual not in rodadas_finalizadas:
-    endpoint = f'partidas/{rodada_atual}'
-    data_partidas = obter_dados_api(endpoint)
-    if data_partidas is not None and 'partidas' in data_partidas:
-        for partida in data_partidas['partidas']:
-            partida['rodada_id'] = rodada_atual
-        dados_partidas_atual = data_partidas['partidas']
-else:
-    dados_partidas_atual = []
-
-# Filtrar somente as partidas da rodada atual na tabela "dados_partidas_atual"
-dados_partidas_atual = [partida for partida in dados_partidas_atual if partida['rodada_id'] == rodada_atual]
-
-if rodada_atual is not None and rodada_atual not in rodadas_finalizadas:
-    endpoint = f'partidas/{rodada_atual}'
-    data_partidas = obter_dados_api(endpoint)
-    if data_partidas is not None and 'partidas' in data_partidas:
-        for partida in data_partidas['partidas']:
-            partida['rodada_id'] = rodada_atual
-        dados_partidas_atual = data_partidas['partidas']
-else:
-    dados_partidas_atual = []
+        dados_partidas.extend(data_partidas['partidas'])
 
 dados_times = obter_dados_api('atletas/mercado')
 
 # Passo 4: Organizar os dados em tabelas
 pontuacoes_jogadores_df = pd.DataFrame(pontuacoes_jogadores)[['atleta_id', 'apelido', 'posicao_id', 'clube_id', 'entrou_em_campo', 'rodada_id', 'CA', 'DS', 'FC', 'FF', 'FD', 'FS', 'I', 'SG', 'A', 'G', 'DE', 'GS', 'V', 'PS', 'FT', 'PP', 'DP', 'CV', 'PC', 'GC', 'pontuacao']]
 dados_destaque_df = pd.DataFrame(obter_dados_destaque(dados_destaque, dados_times))[['atleta_id', 'apelido', 'clube_id', 'time_abr', 'posicao_abreviacao', 'preco_editorial', 'escalacoes']]
-dados_partidas_realizadas_df = pd.DataFrame.from_records(dados_partidas_realizadas)
-dados_partidas_atual_df = pd.DataFrame.from_records(dados_partidas_atual)
+dados_partidas_df = pd.DataFrame.from_records(dados_partidas)
 
 dados_times_clubes = []
 clubes = dados_times.get('clubes', {})
@@ -195,17 +169,17 @@ dados_posicoes_info = obter_dados_posicoes(dados_times)
 dados_posicoes_df = pd.DataFrame(dados_posicoes_info, columns=['id', 'nome'])
 
 # Converter clube_casa_id e clube_visitante_id para o mesmo tipo de dados que clube_id
-dados_partidas_realizadas_df['clube_casa_id'] = dados_partidas_realizadas_df['clube_casa_id'].astype(str)
-dados_partidas_realizadas_df['clube_visitante_id'] = dados_partidas_realizadas_df['clube_visitante_id'].astype(str)
+dados_partidas_df['clube_casa_id'] = dados_partidas_df['clube_casa_id'].astype(str)
+dados_partidas_df['clube_visitante_id'] = dados_partidas_df['clube_visitante_id'].astype(str)
 
 # Merge dos dados de clubes e partidas
-dados_partidas_realizadas_df = dados_partidas_realizadas_df.merge(dados_times_df[['clube_id', 'clube_nome']], left_on='clube_casa_id', right_on='clube_id', how='left')
-dados_partidas_realizadas_df = dados_partidas_realizadas_df.merge(dados_times_df[['clube_id', 'clube_nome']], left_on='clube_visitante_id', right_on='clube_id', how='left')
-dados_partidas_realizadas_df = dados_partidas_realizadas_df.drop(['clube_id_x', 'clube_id_y'], axis=1)
-dados_partidas_realizadas_df = dados_partidas_realizadas_df.rename(columns={'clube_nome_x': 'clube_casa_nome', 'clube_nome_y': 'clube_visitante_nome'})
+dados_partidas_df = dados_partidas_df.merge(dados_times_df[['clube_id', 'clube_nome']], left_on='clube_casa_id', right_on='clube_id', how='left')
+dados_partidas_df = dados_partidas_df.merge(dados_times_df[['clube_id', 'clube_nome']], left_on='clube_visitante_id', right_on='clube_id', how='left')
+dados_partidas_df = dados_partidas_df.drop(['clube_id_x', 'clube_id_y'], axis=1)
+dados_partidas_df = dados_partidas_df.rename(columns={'clube_nome_x': 'clube_casa_nome', 'clube_nome_y': 'clube_visitante_nome'})
 
-# Reordenar campos na tabela "Dados Partidas Realizadas"
-campos_ordenados_realizadas = [
+# Reordenar campos na tabela "Dados Partidas"
+campos_ordenados = [
     'rodada_id',
     'partida_id',
     'partida_data',
@@ -221,22 +195,7 @@ campos_ordenados_realizadas = [
     'placar_oficial_visitante',
     'valida'
 ]
-dados_partidas_realizadas_df = dados_partidas_realizadas_df[campos_ordenados_realizadas]
-
-# Reordenar campos na tabela "Dados Partidas Atual"
-campos_ordenados_atual = [
-    'rodada_id',
-    'partida_id',
-    'partida_data',
-    'clube_casa_id',
-    'clube_casa_posicao',
-    'aproveitamento_mandante',
-    'clube_visitante_id',
-    'clube_visitante_posicao',
-    'aproveitamento_visitante',
-    'valida'
-]
-dados_partidas_atual_df = dados_partidas_atual_df[campos_ordenados_atual]
+dados_partidas_df = dados_partidas_df[campos_ordenados]
 
 # Passo 5: Obter informações dos atletas no mercado
 dados_atletas_mercado = []
@@ -354,12 +313,11 @@ atletas_mercado_df = atletas_mercado_df.reindex(columns=campos_ordenados_atletas
 tabelas = {
     'pontuacoes_jogadores': pontuacoes_jogadores_df,
     'dados_destaque': dados_destaque_df,
-    'dados_partidas_realizadas': dados_partidas_realizadas_df,
-    'dados_partidas_atual': dados_partidas_atual_df,
+    'atletas_mercado': atletas_mercado_df,
+    'dados_partidas': dados_partidas_df,
     'dados_times': dados_times_df,
     'status': dados_status_df,
-    'posicoes': dados_posicoes_df,
-    'atletas_mercado': atletas_mercado_df
+    'posicoes': dados_posicoes_df
 }
 
 # Passo 6: Preencher campos vazios em todas as tabelas

@@ -1,0 +1,30 @@
+Dados partidas
+
+id_rodada
+partida_id
+partida_data
+clube_casa_id
+clube_casa_nome	
+clube_casa_posicao
+aproveitamento_mandante
+clube_visitante_id
+clube_visitante_nome
+clube_visitante_posicao
+aproveitamento_visitante
+placar_oficial_mandante
+placar_oficial_visitante
+valida	
+
+Dados partidas
+
+rodada
+partida_id
+partida_data
+clube_casa_id
+clube_casa_posicao
+aproveitamento_mandante
+clube_visitante_id
+clube_visitante_posicao
+aproveitamento_visitante
+valida	
+											

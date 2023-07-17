@@ -1,0 +1,50 @@
+{"posicao":"Atacante",
+"posicao_abreviacao":"ATA",
+"clube":"CAP",
+"clube_nome":"Athlético-PR",
+"escudo_clube":"https://s.sde.globo.com/media/organizations/2019/09/09/Athletico-PR-65x65.png",
+"Atleta":{"nome":"Vitor Hugo Roque Ferreira",
+"apelido":"Vitor Roque",
+"apelido_abreviado":"V. Roque",
+"foto":"https://s.sde.globo.com/media/person_role/2023/02/28/photo_FORMATO_0B2D0LR.png","atleta_id":114802,
+"preco_editorial":9},
+"clube_id":293,
+"escalacoes":626175}
+
+{"atletas":
+	{"100079":
+		{"scout":
+			{"CA":1,
+			"DS":1,
+			"FC":3,
+			"FF":1},
+				"apelido":"Zaracho",
+		"foto":"https://s.sde.globo.com/media/person_role/2023/03/31/photo_FORMATO_wjGLEpf.png",
+		"pontuacao":0.1,
+		"posicao_id":4,
+		"clube_id":282,
+		"entrou_em_campo":true},
+	"100453":
+	{"scout":
+		{},
+	"apelido":"Luis	Segovia",
+	"foto":"https://s.sde.globo.com/media/person_role/2023/03/07/photo_FORMATO_N5TAr8X.png",
+	"pontuacao":0,
+	"posicao_id":3,
+	"clube_id":263,
+	"entrou_em_campo":true},
+	"100652":
+		{"scout":
+			{"DS":1,
+			"FC":3,
+			"FD":1,
+			"FF":2,
+			"FS":1,
+			"I":4},
+		"apelido":"Yuri lberto",
+		"foto":"https://s.sde.globo.com/media/person_role/2023/03/02/photo_FORMATO_QVzSGOZ.png",
+		"pontuacao":3.2,
+		"posicao_id":5,
+		"clube_id":264,
+		"entrou_em_campo":true},
+	...

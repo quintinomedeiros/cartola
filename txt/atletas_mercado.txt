@@ -1,0 +1,100 @@
+{"clubes":
+	{"1371":
+		{"escudos":	
+			{"60x60":"https://s.sde.globo.com/media/organizations/2014/04/16/cuiaba65.png",
+			"45x45":"https://s.sde.globo.com/media/organizations/2014/04/16/cuiaba45.png",
+			"30x30":"https://s.sde.globo.com/media/organizations/2014/04/16/cuiaba30_.png"
+		},
+		"nome":"Cuiabá",
+		"abreviacao":"CUI",
+		"slug":"cuiaba",
+		"apelido":"Dourado",
+		"nome_fantasia":"Cuiabá",
+	},
+},
+"posicoes":
+	{"1":
+		{"id":1,
+		"nome":"Goleiro",
+		"abreviacao":"gol"
+	},
+	"2":{"id":2,"nome":"Lateral","abreviacao":"lat"},
+	"3":{"id":3,"nome":"Zagueiro","abreviacao":"zag"},
+	"4":{"id":4,"nome":"Meia","abreviacao":"mei"},
+	"5":{"id":5,"nome":"Atacante","abreviacao":"ata"},
+	"6":{"id":6,"nome":"Técnico","abreviacao":"tec"}
+},
+"status":
+	{"2":{"nome":"Dúvida","id":2},
+	"3":{"nome":"Suspenso","id":3},
+	"5":{"nome":"Contundido","id":5},
+	"6":{"nome":"Nulo","id":6},
+	"7":{"nome":"Provável","id":7
+	}
+},
+"atletas":[
+	{"scout":
+		{"CA":2,
+		"DS":6,
+		"FC":5,
+		"FD":3,
+		"FF":5,
+		"FS":13,
+		"G":3,
+		"I":2,
+		"PP":1
+	},
+	"atleta_id":80196,
+	"rodada_id":14,
+	"clube_id":356,
+	"posicao_id":4,
+	"status_id":7,
+	"pontos_num":9.7,
+	"preco_num":8.83,
+	"variacao_num":2.1,
+	"media_num":2.69,
+	"jogos_num":14,
+	"minimo_para_valorizar":7.01,
+	"gato_mestre":
+		{"media_pontos_mandante":3.014285714285714,
+		"media_pontos_visitante":2.3571428571428568,
+		"media_minutos_jogados":48,
+		"minutos_jogados":24,
+		"scouts":
+			{"media":
+				{"FS":0.93,
+				"G":0.21,
+				"I":0.14,
+				"DS":0.43,
+				"FC":0.36,
+				"CA":0.14,
+				"PP":0.07,
+				"FF":0.36,
+				"FD":0.21
+			},
+			"mandante":
+				{"FS":10,
+				"G":1,
+				"I":2,
+				"DS":5,
+				"FC":3,
+				"CA":2,
+				"FF":5,
+				"FD":1
+			},
+			"visitante":
+				{"FS":3,
+				"G":2,
+				"DS":1,
+				"FC":2,
+				"PP":1,
+				"FD":2
+			}
+		}
+	}
+	,"slug":"yago-pikachu",
+	"apelido":"Yago Pikachu",
+	"apelido_abreviado":"Y. Pikachu",
+	"nome":"Glaybson Yago Souza Lisboa",
+	"foto":"https://s.sde.globo.com/media/person_role/2023/05/06/photo_FORMATO_jUc4EZ2.png"
+},	

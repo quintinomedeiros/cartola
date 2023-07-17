@@ -1,0 +1,16 @@
+Tenho as seguintes tabelas com os seus respectivos campos depois de dois pontos:
+
+1) dados_destaque: atleta_id	atleta_apelido	posicao_abreviacao	time_abreviacao	time_id	escalacoes	preco_editorial
+2) dados_mercado: atleta_id	atleta_apelido	rodada_id	time_id	posicao_id	status_id	pontos_num	preco_num	variacao_num	media_num	jogos_num	minimo_para_valorizar	sc_DS	sc_FC	sc_FS	sc_CA	sc_FF	sc_G	sc_FD	sc_I	sc_CV	sc_PC	sc_SG	sc_PP	sc_A	sc_PS	sc_FT	sc_DE	sc_GS	sc_DP	sc_GC	sc_V	gm_media_pontos_mandante	gm_media_pontos_visitante	gm_media_minutos_jogados	gm_minutos_jogados	gm_scouts.media.FS	gm_scouts.media.DS	gm_scouts.media.FC	gm_scouts.mandante.FS	gm_scouts.mandante.DS	gm_scouts.mandante.FC	gm_scouts.visitante.FS	gm_scouts.visitante.DS	gm_scouts.visitante.FC	gm_scouts.media.G	gm_scouts.media.CA	gm_scouts.media.FF	gm_scouts.mandante.CA	gm_scouts.mandante.FF	gm_scouts.visitante.G	gm_scouts.visitante.CA	gm_scouts.visitante.FF	gm_scouts.media.I	gm_scouts.media.FD	gm_scouts.mandante.G	gm_scouts.mandante.I	gm_scouts.mandante.FD	gm_scouts.visitante.I	gm_scouts.visitante.FD	gm_scouts.media.SG	gm_scouts.media.CV	gm_scouts.media.PC	gm_scouts.mandante.CV	gm_scouts.visitante.SG	gm_scouts.visitante.PC	gm_scouts.media.PP	gm_scouts.visitante.PP	gm_scouts.media.A	gm_scouts.media.PS	gm_scouts.mandante.SG	gm_scouts.mandante.PS	gm_scouts.visitante.A	gm_scouts.media.FT	gm_scouts.mandante.FT	gm_scouts.visitante.FT	gm_scouts.media.DE	gm_scouts.media.GS	gm_scouts.mandante.DE	gm_scouts.mandante.GS	gm_scouts.visitante.DE	gm_scouts.visitante.GS	gm_scouts.media.GC	gm_scouts.media.DP	gm_scouts.mandante.DP	gm_scouts.visitante.GC	gm_scouts.mandante.A	gm_scouts.visitante.PS	gm_scouts.visitante.DP	gm_scouts.mandante.PP	gm_scouts.visitante.CV	gm_scouts.mandante.GC	gm_scouts.mandante.PC
+
+3) dados_partidas: rodada_id	vis_aprov	mand_aprov	part_data	vis_plac	mand_plac	partida_id	vis_pos	vis_id	mand_pos	mand_id
+4) dados_rodadas: rodada_inicio	rodada_fim	rodada_id	rodada_nome
+5) dados_times: time_id	time_nome	time_abreviacao	time_slug	time_apelido	time_nome_fantasia	time_url_editorial	time_escudo_60x60	time_escudo_45x45	time_escudo_30x30
+
+6) jogadores_pontuacao: atleta_id	atleta_apelido	time_id	time_nome	posicao_id	pontuacao	entrou_em_campo	rodada_id	scout_ca	pt_scout_ca	scout_cv	pt_scout_cv	scout_dp	pt_scout_dp	scout_fc	pt_scout_fc	scout_ff	pt_scout_ff	scout_fs	pt_scout_fs	scout_ft	pt_scout_ft	scout_g	pt_scout_g	scout_i	pt_scout_i	scout_ds	pt_scout_ds	scout_sg	pt_scout_sg	scout_gc	pt_scout_gc	scout_gs	pt_scout_gs	scout_ps	pt_scout_ps	scout_pc	pt_scout_pc	scout_a	pt_scout_a	scout_fd	pt_scout_fd	scout_pp	pt_scout_pp	pt_time	md_time
+
+Gostaria de utilizar algum modelo de inteligência artificial para analisar essa massa de dados e conseguir realizar a previsão do melhor time para a rodada seguinte com a seguinte configuração, considerando que 'posicao_id' de cada tipo de jogador está entre parênteses:
+3 goleiros (1) e três técnicos (6)
+4 laterais (2), zagueiros (3), meias (4) e atacantes (5)
+
+Consegue me ajudar?
