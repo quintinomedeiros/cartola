@@ -204,6 +204,10 @@ dados_partidas_realizadas_df = dados_partidas_realizadas_df.merge(dados_times_df
 dados_partidas_realizadas_df = dados_partidas_realizadas_df.drop(['clube_id_x', 'clube_id_y'], axis=1)
 dados_partidas_realizadas_df = dados_partidas_realizadas_df.rename(columns={'clube_nome_x': 'clube_casa_nome', 'clube_nome_y': 'clube_visitante_nome'})
 
+# Adicionar colunas de placar zeradas para as partidas da rodada atual
+placar_zerado = {'placar_oficial_mandante': 0, 'placar_oficial_visitante': 0}
+dados_partidas_atual_df = dados_partidas_atual_df.assign(**placar_zerado)
+
 # Reordenar campos na tabela "Dados Partidas Realizadas"
 campos_ordenados_realizadas = [
     'rodada_id',
@@ -234,9 +238,14 @@ campos_ordenados_atual = [
     'clube_visitante_id',
     'clube_visitante_posicao',
     'aproveitamento_visitante',
+    'placar_oficial_mandante',
+    'placar_oficial_visitante',
     'valida'
 ]
 dados_partidas_atual_df = dados_partidas_atual_df[campos_ordenados_atual]
+
+# Concatenar as tabelas de partidas realizadas e da rodada atual
+dados_partidas_df = pd.concat([dados_partidas_realizadas_df, dados_partidas_atual_df])
 
 # Passo 5: Obter informações dos atletas no mercado
 dados_atletas_mercado = []
@@ -354,8 +363,7 @@ atletas_mercado_df = atletas_mercado_df.reindex(columns=campos_ordenados_atletas
 tabelas = {
     'pontuacoes_jogadores': pontuacoes_jogadores_df,
     'dados_destaque': dados_destaque_df,
-    'dados_partidas_realizadas': dados_partidas_realizadas_df,
-    'dados_partidas_atual': dados_partidas_atual_df,
+    'dados_partidas': dados_partidas_df,
     'dados_times': dados_times_df,
     'status': dados_status_df,
     'posicoes': dados_posicoes_df,

@@ -1,11 +1,12 @@
 import os
 import pandas as pd
+from openpyxl import Workbook
+from openpyxl.utils.dataframe import dataframe_to_rows
 
 ARQUIVOS_CSV = {
     'Atletas mercado': 'atletas_mercado.csv',
     'Dados Destaque': 'dados_destaque.csv',
-    'Dados Partidas Atual': 'dados_partidas_atual.csv',
-    'Dados Partidas Realizadas': 'dados_partidas_realizadas.csv',
+    'Dados Partidas': 'dados_partidas.csv',
     'Dados Times': 'dados_times.csv',
     'Pontuacoes Jogadores': 'pontuacoes_jogadores.csv'
 }
@@ -78,7 +79,7 @@ def preencher_campos_vazios(tabelas):
 
 def criar_dataframe(tabelas):
     # Selecionar apenas as tabelas relevantes para o modelo
-    tabelas_selecionadas = ['Atletas mercado', 'Dados Destaque', 'Dados Partidas Atual', 'Dados Partidas Realizadas', 'Dados Times', 'Pontuacoes Jogadores']
+    tabelas_selecionadas = ['Atletas mercado', 'Dados Destaque', 'Dados Partidas', 'Dados Times', 'Pontuacoes Jogadores']
     tabelas_filtradas = {nome_tabela: tabela for nome_tabela, tabela in tabelas.items() if nome_tabela in tabelas_selecionadas}
 
     # Mesclar as tabelas relevantes em um único DataFrame
@@ -93,6 +94,12 @@ def criar_dataframe(tabelas):
         for scout, peso in SCOUT_WEIGHTS.items():
             if scout in tabela_pontuacoes:
                 tabela_pontuacoes[scout] = tabela_pontuacoes[scout] * peso
+
+    # Renomear campos
+    df.rename(columns={'clube_casa_nome': 'clube_nome', 'clube_visitante_nome': 'clube_nome', 'clube_casa_posicao': 'clube_posicao', 'clube_visitante_posicao': 'clube_posicao', 'aproveitamento_mandante': 'clube_aproveitamento', 'aproveitamento_visitante': 'clube_aproveitamento'}, level=0, inplace=True)
+
+    # Criar campo "clube_mand" indicando se o time do atleta é mandante ou não
+    df['clube_mand'] = df['Pontuacoes Jogadores']['clube_id'] == df['Dados Partidas']['clube_casa_id']
 
     return df
 
@@ -119,5 +126,28 @@ if tabelas_completas:
     print('Limpeza dos dados concluída. Os arquivos CSV limpos foram salvos.')
     print('DataFrame consolidado:')
     print(df.head())
+
+    # Criar arquivo do Excel com o DataFrame consolidado e a tabela de origem
+    nome_arquivo_excel = f'dados_consolidados_{pd.Timestamp.now().strftime("%Y%m%d%H%M%S")}.xlsx'
+    workbook = Workbook()
+
+    # Exportar DataFrame consolidado
+    df_sheet = workbook.create_sheet('Dados Consolidados')
+    for row in dataframe_to_rows(df, index=False, header=True):
+        df_sheet.append(row)
+
+    # Exportar tabela com campos/tabelas de origem
+    tabela_origem = pd.DataFrame({'Campo': df.columns.get_level_values(0), 'Tabela': df.columns.get_level_values(1)})
+    tabela_origem_sheet = workbook.create_sheet('Origem dos Dados')
+    for row in dataframe_to_rows(tabela_origem, index=False, header=True):
+        tabela_origem_sheet.append(row)
+
+    # Remover a planilha vazia padrão
+    workbook.remove(workbook['Sheet'])
+
+    # Salvar o arquivo do Excel
+    workbook.save(nome_arquivo_excel)
+
+    print(f'Dados exportados para o arquivo: {nome_arquivo_excel}')
 else:
     print('Erro ao carregar tabelas. Verifique se todos os arquivos estão presentes ou se há valores ausentes nos dados.')
