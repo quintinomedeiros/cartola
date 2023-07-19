@@ -108,60 +108,6 @@ def criar_dataframe(tabelas):
     return df
 
 
-def adaptar_dados_partidas(df, tabelas):
-    """
-    Adapta os dados da tabela "Dados Partidas" para incluir no DataFrame principal.
-    """
-    tabela_partidas = tabelas['Dados Partidas']
-
-    # Lista para armazenar os dados adaptados da tabela "Dados Partidas"
-    dados_partidas_adaptados = []
-
-    # Percorrer as linhas do DataFrame principal
-    for _, linha in df.iterrows():
-        rodada_id = int(linha['rodada_id'])
-        clube_id = int(linha['clube_id'])
-
-        # Filtrar a partida correspondente ao clube na rodada
-        partida = tabela_partidas.loc[(tabela_partidas['rodada_id'] == rodada_id) & ((tabela_partidas['clube_casa_id'] == clube_id) | (tabela_partidas['clube_visitante_id'] == clube_id))].iloc[0]
-
-        # Verificar se o clube do atleta era mandante ou visitante
-        if partida['clube_casa_id'] == clube_id:
-            dados_partida = {
-                'rodada_id': rodada_id,
-                'partida_id': partida['partida_id'],
-                'partida_data': partida['partida_data'],
-                'clube_mand': 'VERDADEIRO',
-                'clube_posicao': partida['clube_casa_posicao'],
-                'clube_aproveitamento': partida['aproveitamento_mandante'],
-                'placar_oficial_mandante': partida['placar_oficial_mandante'],
-                'placar_oficial_visitante': partida['placar_oficial_visitante'],
-                'valida': partida['valida']
-            }
-        else:
-            dados_partida = {
-                'rodada_id': rodada_id,
-                'partida_id': partida['partida_id'],
-                'partida_data': partida['partida_data'],
-                'clube_mand': 'FALSO',
-                'clube_posicao': partida['clube_visitante_posicao'],
-                'clube_aproveitamento': partida['aproveitamento_visitante'],
-                'placar_oficial_mandante': partida['placar_oficial_mandante'],
-                'placar_oficial_visitante': partida['placar_oficial_visitante'],
-                'valida': partida['valida']
-            }
-
-        dados_partidas_adaptados.append(dados_partida)
-
-    # Criar DataFrame com os dados adaptados da tabela "Dados Partidas"
-    df_partidas = pd.DataFrame(dados_partidas_adaptados)
-
-    # Mesclar os dados adaptados com o DataFrame principal
-    df = pd.concat([df, df_partidas], axis=1)
-
-    return df
-
-
 def criar_tabela_dados_rodada_atual(tabelas):
     """
     Cria a tabela "Dados Rodada Atual" com base nas tabelas "Atletas mercado" e "Dados Destaque".
@@ -191,10 +137,7 @@ preencher_campos_vazios(tabelas)
 # Passo 3: Criar DataFrame único com as tabelas relevantes
 df = criar_dataframe(tabelas)
 
-# Passo 4: Adaptar os dados da tabela "Dados Partidas"
-df = adaptar_dados_partidas(df, tabelas)
-
-# Passo 5: Criar tabela "Dados Rodada Atual"
+# Passo 4: Criar tabela "Dados Rodada Atual"
 tabela_rodada_atual = criar_tabela_dados_rodada_atual(tabelas)
 
 if tabela_rodada_atual is not None:
@@ -218,7 +161,7 @@ if tabela_rodada_atual is not None:
     tabela_origem = pd.DataFrame({'Campo': df.columns, 'Tabela': df.columns})
     tabela_origem.to_excel(writer, sheet_name='Origem dos Dados', index=False)
 
-    writer.save()
+    writer._save()
 
     print(f'Dados exportados para o arquivo: {nome_arquivo_excel}')
 else:
