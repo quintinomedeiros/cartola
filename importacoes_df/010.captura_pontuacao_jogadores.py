@@ -2,165 +2,117 @@ import pandas as pd
 import requests
 from datetime import datetime
 import warnings
-warnings.filterwarnings("ignore")  # Ignorar mensagens de aviso
 
-scouts_pesos = {
+warnings.filterwarnings("ignore")  # Ignore warning messages
+
+# Function to calculate the score of scouts by multiplying them by their respective weight
+def calculate_scout_score(scouts, scouts_weights):
+    if scouts is None:
+        return 0
+
+    scouts = {scout: scouts.get(scout, 0) for scout in scouts_weights.keys()}
+    score = sum(value * scouts_weights[scout] for scout, value in scouts.items())
+    return score
+
+# Dictionary with the weights of scouts
+scouts_weights = {
     'ds': 1.2, 'fc': -0.3, 'gc': -3.0, 'ca': -1.0, 'cv': -3.0, 'sg': 5.0, 'dp': 7.0, 'gs': -1.0,
     'pc': -1.0, 'fs': 0.5, 'a': 5.0, 'ft': 3.0, 'fd': 1.2, 'ff': 0.8, 'g': 8.0, 'i': -0.1,
     'pp': -4.0, 'ps': 1.0
 }
 
-# Obter a quantidade total de rodadas
-url_rodadas = 'https://api.cartolafc.globo.com/rodadas'
-resposta_rodadas = requests.get(url_rodadas)
-rodadas = resposta_rodadas.json()
-quantidade_rodadas = len(rodadas)
+# Obtain the total number of rounds
+url_rounds = 'https://api.cartolafc.globo.com/rodadas'
+response_rounds = requests.get(url_rounds)
+rounds_data = response_rounds.json()
 
-# Carregar dados do arquivo 'dados_rodadas.xlsx' para obter a última rodada
-dados_rodadas = pd.read_excel('base/dados_rodadas.xlsx')
+# Extract round_ids from the list of rounds
+round_ids = [round_info['rodada_id'] for round_info in rounds_data]
 
-# Converter a coluna "rodada_fim" para o tipo datetime
-dados_rodadas['rodada_fim'] = pd.to_datetime(dados_rodadas['rodada_fim'])
+# Create empty lists to store player attributes
+players_data = []
 
-# Obter a data e hora atual
-ultima_data = datetime.now()
+# Iterate over the rounds and retrieve player scores
+for round_id in round_ids:
+    url_scores = f'https://api.cartolafc.globo.com/atletas/pontuados/{round_id}'
+    response_scores = requests.get(url_scores)
+    scores_data = response_scores.json()
+    if 'atletas' in scores_data:
+        players = scores_data['atletas']
+        for player_id, player in players.items():
+            # Collect player attributes
+            scouts = player.get('scout')
+            score = calculate_scout_score(scouts, scouts_weights)
+            players_data.append({
+                'player_id': player_id,
+                'player_nickname': player['apelido'],
+                'position_id': player['posicao_id'],
+                'team_id': player['clube_id'],
+                'score': score,
+                'entered_field': player['entrou_em_campo'],
+                'round_id': round_id
+            })
 
-# Filtrar as rodadas até a última
-rodadas_filtradas = dados_rodadas[dados_rodadas['rodada_fim'] <= ultima_data]['rodada_id'].tolist()
+# Create DataFrame with player attributes
+df_combined = pd.DataFrame(players_data)
 
-# Criar listas vazias para armazenar os atributos dos atletas
-atletas_ids = []
-atletas_apelidos = []
-posicoes_ids = []
-clubes_ids = []
-pontuacoes = []
-entrou_em_campos = []
-rodada_ids = []
-scout_ca = []
-scout_cv = []
-scout_dp = []
-scout_fc = []
-scout_ff = []
-scout_fs = []
-scout_ft = []
-scout_g = []
-scout_i = []
-scout_ds = []
-scout_sg = []
-scout_gc = []
-scout_gs = []
-scout_ps = []
-scout_pc = []
-scout_a = []
-scout_fd = []
-scout_pp = []
+# Get match information
+matches_data = []
 
-# Iterar sobre as rodadas e buscar a pontuação
-for rodada_id in rodadas_filtradas:
-    url = f'https://api.cartola.globo.com/atletas/pontuados/{rodada_id}'
-    resposta = requests.get(url)
-    objetos = resposta.json()
-    if 'atletas' in objetos:
-        atletas = objetos['atletas']
-        for atleta_id, atleta in atletas.items():
-            # Coletar atributos dos atletas
-            atletas_ids.append(atleta_id)
-            atletas_apelidos.append(atleta['apelido'])
-            posicoes_ids.append(atleta['posicao_id'])
-            clubes_ids.append(atleta['clube_id'])
-            pontuacoes.append(atleta['pontuacao'])
-            entrou_em_campos.append(atleta['entrou_em_campo'])
-            rodada_ids.append(rodada_id)
-            scout = atleta.get('scout', {})
-            scout_ca.append(scout.get('CA', 0))
-            scout_cv.append(scout.get('CV', 0))
-            scout_dp.append(scout.get('DP', 0))
-            scout_fc.append(scout.get('FC', 0))
-            scout_ff.append(scout.get('FF', 0))
-            scout_fs.append(scout.get('FS', 0))
-            scout_ft.append(scout.get('FT', 0))
-            scout_g.append(scout.get('G', 0))
-            scout_i.append(scout.get('I', 0))
-            scout_ds.append(scout.get('DS', 0))
-            scout_sg.append(scout.get('SG', 0))
-            scout_gc.append(scout.get('GC', 0))
-            scout_gs.append(scout.get('GS', 0))
-            scout_ps.append(scout.get('PS', 0))
-            scout_pc.append(scout.get('PC', 0))
-            scout_a.append(scout.get('A', 0))
-            scout_fd.append(scout.get('FD', 0))
-            scout_pp.append(scout.get('PP', 0))
+# Iterate over the rounds
+for round_id in round_ids:
+    url_matches = f'https://api.cartolafc.globo.com/partidas/{round_id}'
+    response_matches = requests.get(url_matches)
+    if response_matches.status_code == 200:
+        matches_info = response_matches.json()
+        if 'partidas' in matches_info:
+            for match in matches_info['partidas']:
+                home_team_id = match['clube_casa_id']
+                away_team_id = match['clube_visitante_id']
+                for index, row in df_combined.iterrows():
+                    if row['team_id'] == home_team_id and row['round_id'] == round_id:
+                        match_date = match['partida_data']
+                        home_team_performance = ', '.join(match['aproveitamento_mandante'])
+                        home_team_position = match['clube_casa_posicao']
+                        away_team_score = match['placar_oficial_visitante']
+                        home_team_score = match['placar_oficial_mandante']
+                        valid_match = match['valida']
+                        home_team_match = True
+                        matches_data.append([row['player_id'], row['player_nickname'], row['position_id'],
+                                             row['team_id'], row['score'], row['entered_field'],
+                                             row['round_id'], home_team_match, match['partida_id'], match_date,
+                                             home_team_performance, home_team_position, away_team_score,
+                                             home_team_score, valid_match])
+                    elif row['team_id'] == away_team_id and row['round_id'] == round_id:
+                        match_date = match['partida_data']
+                        away_team_performance = ', '.join(match['aproveitamento_visitante'])
+                        away_team_position = match['clube_visitante_posicao']
+                        away_team_score = match['placar_oficial_visitante']
+                        home_team_score = match['placar_oficial_mandante']
+                        valid_match = match['valida']
+                        home_team_match = False
+                        matches_data.append([row['player_id'], row['player_nickname'], row['position_id'],
+                                             row['team_id'], row['score'], row['entered_field'],
+                                             row['round_id'], home_team_match, match['partida_id'], match_date,
+                                             away_team_performance, away_team_position, away_team_score,
+                                             home_team_score, valid_match])
 
-# Criar DataFrame com os atributos dos atletas
-data = {
-    'atleta_id': atletas_ids,
-    'atleta_apelido': atletas_apelidos,
-    'posicao_id': posicoes_ids,
-    'time_id': clubes_ids,
-    'pontuacao': pontuacoes,
-    'entrou_em_campo': entrou_em_campos,
-    'rodada_id': rodada_ids,
-    'scout_ca': scout_ca,
-    'scout_cv': scout_cv,
-    'scout_dp': scout_dp,
-    'scout_fc': scout_fc,
-    'scout_ff': scout_ff,
-    'scout_fs': scout_fs,
-    'scout_ft': scout_ft,
-    'scout_g': scout_g,
-    'scout_i': scout_i,
-    'scout_ds': scout_ds,
-    'scout_sg': scout_sg,
-    'scout_gc': scout_gc,
-    'scout_gs': scout_gs,
-    'scout_ps': scout_ps,
-    'scout_pc': scout_pc,
-    'scout_a': scout_a,
-    'scout_fd': scout_fd,
-    'scout_pp': scout_pp
-}
-df_combined = pd.DataFrame(data)
+# Create DataFrame with player attributes and match information
+df_combined = pd.DataFrame(matches_data, columns=[
+    'player_id', 'player_nickname', 'position_id', 'team_id', 'score', 'entered_field', 'round_id',
+    'home_team_match', 'match_id', 'match_date', 'home_team_performance', 'home_team_position',
+    'away_team_score', 'home_team_score', 'valid_match'
+])
 
-# Calcular campos multiplicando a pontuação de cada scout pelo seu respectivo peso
-for scout, peso in scouts_pesos.items():
-    campo_scout = 'scout_' + scout
-    campo_pontuacao = 'pt_' + campo_scout
-    df_combined[campo_pontuacao] = df_combined[campo_scout] * peso
+# Calculate team score in each round
+df_combined['team_score'] = df_combined.groupby(['round_id', 'team_id'])['score'].transform('sum')
 
-# Adicionar a coluna 'time_nome' com o nome do time
-url_clubes = 'https://api.cartolafc.globo.com/clubes'
-resposta_clubes = requests.get(url_clubes)
-dados_clubes = resposta_clubes.json()
+# Calculate the average score of players in each round
+df_combined['avg_team_score'] = df_combined.groupby(['round_id', 'team_id'])['score'].transform('mean')
 
-# Criar um dicionário com o nome dos clubes
-clubes_nomes = {clube['id']: clube['nome'] for clube in dados_clubes.values()}
+# Generate the name of the file with the current timestamp
+current_time_str = datetime.now().strftime("%Y%m%d%H%M%S")
+file_name = f'players_and_matches_{current_time_str}.xlsx'
 
-df_combined['time_nome'] = df_combined['time_id'].map(clubes_nomes)
-
-# Reordenar as colunas
-colunas = ['atleta_id', 'atleta_apelido', 'time_id', 'time_nome', 'posicao_id', 'pontuacao', 'entrou_em_campo',
-           'rodada_id', 'scout_ca', 'pt_scout_ca', 'scout_cv', 'pt_scout_cv', 'scout_dp', 'pt_scout_dp',
-           'scout_fc', 'pt_scout_fc', 'scout_ff', 'pt_scout_ff', 'scout_fs', 'pt_scout_fs', 'scout_ft',
-           'pt_scout_ft', 'scout_g', 'pt_scout_g', 'scout_i', 'pt_scout_i', 'scout_ds', 'pt_scout_ds',
-           'scout_sg', 'pt_scout_sg', 'scout_gc', 'pt_scout_gc', 'scout_gs', 'pt_scout_gs', 'scout_ps',
-           'pt_scout_ps', 'scout_pc', 'pt_scout_pc', 'scout_a', 'pt_scout_a', 'scout_fd', 'pt_scout_fd',
-           'scout_pp', 'pt_scout_pp']
-df_combined = df_combined[colunas]
-
-# Calcular a pontuação do time na rodada
-df_combined['pt_time'] = df_combined.groupby(['rodada_id', 'time_id'])['pontuacao'].transform('sum')
-
-# Calcular a média da pontuação dos atletas na rodada
-df_combined['md_time'] = df_combined.groupby(['rodada_id', 'time_id'])['pontuacao'].transform('mean')
-
-# Obter o número da última rodada consultada
-ultima_rodada = rodadas_filtradas[-1]
-
-# Obter o momento da gravação
-momento_gravacao = datetime.now().strftime("%Y%m%d%H%M%S")
-
-# Gerar o nome do arquivo
-nome_arquivo = f"jogadores_pontuacao_{momento_gravacao}.xlsx"
-
-# Salvar o relatório no arquivo Excel
-df_combined.to_excel(nome_arquivo, index=False)
+# Save the DataFrame to an Excel file
+df_combined.to_excel(file_name, index=False)
