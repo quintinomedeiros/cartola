@@ -1,0 +1,91 @@
+Preciso da sua ajuda, agora para montar um modelo de machine learning que analise dos dados das tabelas "dados_mercado" e "jogadores_e_partidas" e faça uma previsão para cada posição dos cinco jogadores com maior probabilidade de pontuação. Vou apresentar uma descrição das duas tabelas e dos seus campos e gostaria de uma orientação de quais os próximos passos para essa construção:
+
+-Tabela "jogadores_e_pontuacoes": apresenta as informações de todos os atletas em todas as partidas e rodadas já finalizadas do CartolaFC anteriores à rodada atual
+a) atleta_id: chave-primária com o identificado do atleta
+b) posicao_id: identificador da posição do atleta (1,Goleiro; 2,Lateral; 3,Zagueiro; 4,Meia; 5,Atacante; 6,Técnico)
+c) time_id: identificador do time
+d) pontuacao: total de pontos do atleta na rodada
+e) entrou_em_campo: indicação se o atleta jogou ou não na rodada
+f) rodada_id: identificador da rodada
+g) pt_scout_ca, pt_scout_cv, pt_scout_dp, pt_scout_fc, pt_scout_ff, pt_scout_fs, pt_scout_ft, pt_scout_g, pt_scout_i, pt_scout_ds, pt_scout_sg, pt_scout_gc, pt_scout_gs, pt_scout_ps, pt_scout_pc, pt_scout_a, pt_scout_fd, pt_scout_pp: pontuação do atleta (frequência multiplicada pelo peso) em cada item do scout na rodada
+clube_mand: indicação se o time do atleta é mandante ou visitante a cada rodada
+h) clube_aprov: desempenho do time do atleta nas últimas cinco rodadas (v = vitória; e = empate; d= derrota) a cada rodada
+i) clube_pos: posição do time do atleta no campeonato brasileiro de futebol a cada rodada
+j) vis_plac: gols marcados pelo time visitante da partida na qual o time do atleta participou a cada rodada
+
+
+- Tabela "dados_mercado": apresenta as informações dos jogadores na rodada atual. Importante considerar na previsão dos times os campos "posicao_id", pois queremos os 5 atletas com maior probabilidade de melhor pontuar para cada posição e "status_id", pois queremos considerar na previsão somente os jogadores com status == 7, que são aqueles que provavelmente irão jogar na rodada. Ela possui os seguintes campos:
+a) atleta_id: chave-primária com o identificado do atleta
+b) atleta_apelido: apelido do atleta
+c) rodada_id: identificador da rodada
+d) time_id: identificador do time
+e) posicao_id: identificador da posição do atleta (1,Goleiro; 2,Lateral; 3,Zagueiro; 4,Meia; 5,Atacante; 6,Técnico)
+f) status_id: identificador do status do atleta na rodada atual (2,Dúvida; 3,Suspenso; 5,Contundido; 6,Nulo; 7,Provável)
+g) pontos_num: pontuação do atleta na rodada anterior
+h) preco_num: valor para escalação do atleta na rodada atual em cartoletas (moeda virtual do fantasygame CartolaFC)
+i) variacao_num: diferença de pontuação do atleta entre as duas rodadas
+j) media_num: média da pontuação do atleta nas rodadas anteriores
+k) jogos_num: número de partidas disputadas pelo atleta até a rodada atual
+l) minimo_para_valorizar: pontuação mínimo na rodada atual para que o jogador ganhe cartoletas no seu valor
+m) sc_CV, sc_DE, sc_DP, sc_FC, sc_FS, sc_GC, sc_GS, sc_CA, sc_DS, sc_FF, sc_G, sc_SG, sc_FD, sc_I, sc_PC, sc_PP, sc_A, sc_PS, sc_FT e sc_V: total acumulado até a rodada atual da frequência de cada um dos itens do scout sem a ponderação de peso para cada scout
+n) gm_media_pontos_mandante: média da pontuação do atleta nas partidas em que era mandante
+o) gm_media_pontos_visitante: média da pontuação do atleta nas partidas em que era visitante
+p) gm_media_minutos_jogados: média de minutos jogados pelo atleta nas rodadas anteriores
+q) gm_minutos_jogados: total de minutos jogados pelo atleta nas rodadas anteriores
+r) gm_scouts.media.FS, gm_scouts.media.FC, gm_scouts.media.GC, gm_scouts.media.CV, gm_scouts.media.DE, gm_scouts.media.DP, gm_scouts.media.GS, gm_scouts.mandante.FC, gm_scouts.mandante.CV, gm_scouts.mandante.DE, gm_scouts.mandante.DP, gm_scouts.mandante.GS, gm_scouts.visitante.FS, gm_scouts.visitante.GC, gm_scouts.visitante.DE, gm_scouts.visitante.GS, gm_scouts.media.SG, gm_scouts.media.G, gm_scouts.media.DS, gm_scouts.media.CA, gm_scouts.media.FF, gm_scouts.mandante.FS, gm_scouts.mandante.DS, gm_scouts.mandante.CA, gm_scouts.mandante.FF, gm_scouts.visitante.SG, gm_scouts.visitante.G, gm_scouts.visitante.DS, gm_scouts.visitante.FC, gm_scouts.visitante.CA, gm_scouts.visitante.FF, gm_scouts.mandante.SG, gm_scouts.media.I, gm_scouts.media.FD, gm_scouts.mandante.G, gm_scouts.mandante.I, gm_scouts.mandante.FD, gm_scouts.visitante.I, gm_scouts.visitante.FD, gm_scouts.media.PC, gm_scouts.visitante.PC, gm_scouts.media.PP, gm_scouts.visitante.PP, gm_scouts.media.A, gm_scouts.media.PS, gm_scouts.mandante.PS,	gm_scouts.visitante.A, gm_scouts.media.FT, gm_scouts.mandante.FT, gm_scouts.visitante.FT, gm_scouts.visitante.DP, gm_scouts.mandante.A, gm_scouts.visitante.PS, gm_scouts.mandante.PP, gm_scouts.visitante.CV, gm_scouts.mandante.GC, gm_scouts.mandante.PC: : média da frequência dos itens de scout do atleta nas rodadas anteriores considerando a média de todas as partidas, a média como mandante e a média com visitante
+s) atleta_dest: indicação se o atletala está entre os 20 mais escalados na rodada atual
+t) atleta_esc: total de escalações dos atletas que estão entre os 20 mais escalados na rodada atual
+
+Acha que é melhor a gente realizar uma análise de cada um dos arquivos que estão gerando as tabelas acima, tentar ajustar para criar um único arquivo que gere o banco de dados em .csv ou partir para a modelagem do modelo de ML que irá fazer todos os tratamentos necessários. Minha preferência seria a primeira opção: ajustar cada um dos arquivos para gerar os dois bancos de dados já limpos e tratados para irem direto para o modelo analisar e realizar a previsão.
+
+Vou descrever as etapas a seguir:
+
+Análise e tratamento dos dados:
+
+Analisar os dados das tabelas "jogadores_e_pontuacoes" e "dados_mercado" para entender a estrutura e distribuição dos dados.
+Identificar e lidar com dados ausentes ou valores inconsistentes.
+Realizar transformações ou tratamentos necessários nos campos para que eles possam ser usados no modelo de machine learning.
+Unir as informações relevantes de ambas as tabelas em um único DataFrame para a construção do modelo.
+Preparação dos dados:
+
+Dividir os dados em conjunto de treinamento e conjunto de teste.
+Separar os atributos de entrada (features) do atributo de saída (target) que queremos prever (pontuação dos jogadores).
+Padronizar ou normalizar os valores das features, se necessário.
+Construção do modelo:
+
+Escolher um algoritmo de machine learning adequado para previsão de pontuação de jogadores, como regressão linear, regressão logística ou um modelo de árvore de decisão.
+Treinar o modelo utilizando o conjunto de treinamento.
+Avaliação do modelo:
+
+Avaliar o desempenho do modelo utilizando o conjunto de teste.
+Utilizar métricas apropriadas para avaliar o quão bem o modelo está prevendo a pontuação dos jogadores.
+Previsão dos cinco jogadores com maior probabilidade de pontuação para cada posição:
+
+Utilizar o modelo treinado para fazer previsões para os jogadores na rodada atual (tabela "dados_mercado").
+Classificar os jogadores por sua probabilidade de pontuação e selecionar os cinco melhores para cada posição.
+Exportar os resultados:
+
+Exportar os resultados da previsão, incluindo os cinco jogadores com maior probabilidade de pontuação para cada posição, em um formato de interesse (por exemplo, CSV).
+
+
+ANTIGA
+-Tabela "jogadores_e_pontuacoes": apresenta as informações de todos os atletas em todas as partidas e rodadas já finalizadas do CartolaFC anteriores à rodada atual
+a) atleta_id: chave-primária com o identificado do atleta
+b) atleta_apelido: apelido do atleta
+c) posicao_id: identificador da posição do atleta (1,Goleiro; 2,Lateral; 3,Zagueiro; 4,Meia; 5,Atacante; 6,Técnico)
+d) time_id: identificador do time
+e) pontuacao: total de pontos do atleta na rodada
+f) entrou_em_campo: indicação se o atleta jogou ou não na rodada
+g) rodada_id: identificador da rodada
+h) pt_scout_ca, pt_scout_cv, pt_scout_dp, pt_scout_fc, pt_scout_ff, pt_scout_fs, pt_scout_ft, pt_scout_g, pt_scout_i, pt_scout_ds, pt_scout_sg, pt_scout_gc, pt_scout_gs, pt_scout_ps, pt_scout_pc, pt_scout_a, pt_scout_fd, pt_scout_pp: pontuação do atleta (frequência multiplicada pelo peso) em cada item do scout na rodada
+clube_mand: indicação se o time do atleta é mandante ou visitante a cada rodada
+i) partida_id: identificador da partida do time do atleta a cada rodada
+j) part_data: data de realização da partida
+k) clube_aprov: desempenho do time do atleta nas últimas cinco rodadas (v = vitória; e = empate; d= derrota) a cada rodada
+l) clube_pos: posição do time do atleta no campeonato brasileiro de futebol a cada rodada
+m) vis_plac: gols marcados pelo time visitante da partida na qual o time do atleta participou a cada rodada
+n) mand_plac: gols marcados pelo time mandante da partida na qual o time do atleta participou a cada rodada
+o) valida: indicação se a partida ralizada pelo time do atleta foi considerada para pontuação no fantasy game CartolaFC
+p) pt_time: pontuação total do time do atleta na rodada (soma da pontuação de todos os atletas do time a cada rodada)
+q) md_time: pontuação média do time do atleta na rodada (média da pontuação de todos os atletas do time a cada rodada)
+

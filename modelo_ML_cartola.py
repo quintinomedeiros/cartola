@@ -1,225 +1,114 @@
-import os
 import pandas as pd
-from openpyxl import Workbook
-from openpyxl.utils.dataframe import dataframe_to_rows
+import requests
+from datetime import datetime
+import warnings
 
-# Dicionário que mapeia os nomes das tabelas aos seus respectivos arquivos CSV
-ARQUIVOS_CSV = {
-    'Atletas mercado': 'atletas_mercado.csv',
-    'Dados Destaque': 'dados_destaque.csv',
-    'Dados Partidas': 'dados_partidas.csv',
-    'Dados Times': 'dados_times.csv',
-    'Pontuacoes Jogadores': 'pontuacoes_jogadores.csv'
+warnings.filterwarnings("ignore")  # Ignorar mensagens de aviso
+
+# Função para calcular a pontuação dos scouts multiplicando pelo peso correspondente
+def calcular_pontuacao_scout(scouts, scouts_pesos):
+    if scouts is None:
+        return 0
+
+    scouts = {scout: scouts.get(scout, 0) for scout in scouts_pesos.keys()}
+    pontuacao = sum(valor * scouts_pesos[scout] for scout, valor in scouts.items())
+    return pontuacao
+
+# Dicionário com os pesos dos scouts
+scouts_pesos = {
+    'ds': 1.2, 'fc': -0.3, 'gc': -3.0, 'ca': -1.0, 'cv': -3.0, 'sg': 5.0, 'dp': 7.0, 'gs': -1.0,
+    'pc': -1.0, 'fs': 0.5, 'a': 5.0, 'ft': 3.0, 'fd': 1.2, 'ff': 0.8, 'g': 8.0, 'i': -0.1,
+    'pp': -4.0, 'ps': 1.0
 }
 
-# Dicionário que mapeia os pesos dos scouts
-SCOUT_WEIGHTS = {
-    'DS': 1.2,
-    'FC': -0.3,
-    'GC': -3.0,
-    'CA': -1.0,
-    'CV': -3.0,
-    'SG': 5.0,
-    'DE': 1.0,
-    'DP': 7.0,
-    'GS': -1.0,
-    'PC': -1.0,
-    'FS': 0.5,
-    'I': -0.1,
-    'A': 5.0,
-    'FT': 3.0,
-    'FD': 1.2,
-    'FF': 0.8,
-    'G': 8.0,
-    'PP': -4.0,
-    'PS': 1.0,
-    'V': 1.0
-}
+# Obter a quantidade total de rodadas
+url_rodadas = 'https://api.cartolafc.globo.com/rodadas'
+resposta_rodadas = requests.get(url_rodadas)
+rodadas = resposta_rodadas.json()
+quantidade_rodadas = len(rodadas)
 
-def carregar_dados():
-    """
-    Carrega os dados dos arquivos CSV para um dicionário de DataFrames.
-    """
-    diretorio = 'bd_cartola_modelo'
-    tabelas = {}
+# Carregar dados do arquivo 'dados_rodadas.xlsx' para obter a última rodada
+dados_rodadas = pd.read_excel('base/dados_rodadas.xlsx')
 
-    for nome_tabela, nome_arquivo in ARQUIVOS_CSV.items():
-        caminho_arquivo = os.path.join(diretorio, nome_arquivo)
-        if os.path.exists(caminho_arquivo):
-            tabela = pd.read_csv(caminho_arquivo)
-            tabelas[nome_tabela] = tabela
-        else:
-            print(f'Arquivo não encontrado: {caminho_arquivo}')
+# Converter a coluna "rodada_fim" para o tipo datetime
+dados_rodadas['rodada_fim'] = pd.to_datetime(dados_rodadas['rodada_fim'])
 
-    if len(tabelas) != len(ARQUIVOS_CSV):
-        # Verificar quais arquivos estão faltando
-        arquivos_faltantes = set(ARQUIVOS_CSV.values()) - set(tabelas.keys())
-        for arquivo in arquivos_faltantes:
-            print(f'Arquivo faltando: {arquivo}')
+# Obter a data e hora atual
+ultima_data = datetime.now()
 
-    return tabelas
+# Filtrar as rodadas até a última
+rodadas_filtradas = dados_rodadas[dados_rodadas['rodada_fim'] <= ultima_data]['rodada_id'].tolist()
 
+# Criar listas vazias para armazenar os atributos dos atletas e informações das partidas
+atletas_dados = []
+partidas_dados = []
 
-def preencher_campos_vazios(tabelas):
-    """
-    Preenche campos vazios nas tabelas com zero e aplica pesos aos scouts.
-    """
-    for nome_tabela, tabela in tabelas.items():
-        tabela.fillna(0, inplace=True)
-
-    # Tratamento específico para a tabela "Atletas mercado"
-    if 'Atletas mercado' in tabelas:
-        tabela_atletas = tabelas['Atletas mercado']
-        tabela_atletas.fillna(0, inplace=True)
-        tabela_atletas[['minimo_para_valorizar']] = tabela_atletas[['minimo_para_valorizar']].astype(int)
-        for scout in SCOUT_WEIGHTS.keys():
-            if scout in tabela_atletas:
-                tabela_atletas[scout] = tabela_atletas[scout] * SCOUT_WEIGHTS[scout]
-
-    # Tratamento específico para a tabela "Pontuacoes Jogadores"
-    if 'Pontuacoes Jogadores' in tabelas:
-        tabela_pontuacoes = tabelas['Pontuacoes Jogadores']
-        tabela_pontuacoes.fillna(0, inplace=True)
-        for scout in SCOUT_WEIGHTS.keys():
-            if scout in tabela_pontuacoes:
-                tabela_pontuacoes[scout] = tabela_pontuacoes[scout] * SCOUT_WEIGHTS[scout]
-
-
-def criar_dataframe(tabelas):
-    """
-    Cria um DataFrame único mesclando as tabelas relevantes e realiza transformações nos dados.
-    """
-    # Selecionar apenas as tabelas relevantes para o modelo
-    tabelas_selecionadas = ['Pontuacoes Jogadores', 'Dados Partidas']
-    tabelas_filtradas = {nome_tabela: tabela for nome_tabela, tabela in tabelas.items() if nome_tabela in tabelas_selecionadas}
-
-    # Criar DataFrame com campos da tabela "Pontuacoes Jogadores"
-    df = tabelas_filtradas['Pontuacoes Jogadores'].copy()
-
-    # Adicionar campos da tabela "Dados Partidas" ao DataFrame
-    df = pd.concat([df, tabelas_filtradas['Dados Partidas']], axis=1)
-
-    # Preencher campos vazios com zero
-    df.fillna(0, inplace=True)
-
-    # Renomear campos da tabela "Dados Partidas"
-    df.rename(columns={'clube_casa_nome': 'clube_nome', 'clube_visitante_nome': 'clube_nome', 'clube_casa_posicao': 'clube_posicao', 'clube_visitante_posicao': 'clube_posicao', 'aproveitamento_mandante': 'clube_aproveitamento', 'aproveitamento_visitante': 'clube_aproveitamento'}, inplace=True)
-
-    return df
-
-
-def adaptar_dados_partidas(df, tabelas):
-    """
-    Adapta os dados da tabela "Dados Partidas" para incluir no DataFrame principal.
-    """
-    tabela_partidas = tabelas['Dados Partidas']
-
-    # Lista para armazenar os dados adaptados da tabela "Dados Partidas"
-    dados_partidas_adaptados = []
-
-    # Percorrer as linhas do DataFrame principal
-    for _, linha in df.iterrows():
-        rodada_id = int(linha['rodada_id'])
-        clube_id = int(linha['clube_id'])
-
-        # Filtrar a partida correspondente ao clube na rodada
-        partida = tabela_partidas.loc[(tabela_partidas['rodada_id'] == rodada_id) & ((tabela_partidas['clube_casa_id'] == clube_id) | (tabela_partidas['clube_visitante_id'] == clube_id))].iloc[0]
-
-        # Verificar se o clube do atleta era mandante ou visitante
-        if partida['clube_casa_id'] == clube_id:
-            dados_partida = {
+# Obter informações dos atletas e das partidas
+for rodada_id in rodadas_filtradas:
+    url_pontuacoes = f'https://api.cartolafc.globo.com/atletas/pontuados/{rodada_id}'
+    resposta_pontuacoes = requests.get(url_pontuacoes)
+    objetos_pontuacoes = resposta_pontuacoes.json()
+    if 'atletas' in objetos_pontuacoes:
+        atletas = objetos_pontuacoes['atletas']
+        for atleta_id, atleta in atletas.items():
+            # Coletar atributos dos atletas
+            scouts = atleta.get('scout')
+            pontuacao = calcular_pontuacao_scout(scouts, scouts_pesos)
+            atletas_dados.append({
+                'atleta_id': atleta_id,
+                'posicao_id': atleta['posicao_id'],
+                'pontuacao': pontuacao,
+                'entrou_em_campo': atleta['entrou_em_campo'],
                 'rodada_id': rodada_id,
-                'partida_id': partida['partida_id'],
-                'partida_data': partida['partida_data'],
-                'clube_mand': 'VERDADEIRO',
-                'clube_posicao': partida['clube_casa_posicao'],
-                'clube_aproveitamento': partida['aproveitamento_mandante'],
-                'placar_oficial_mandante': partida['placar_oficial_mandante'],
-                'placar_oficial_visitante': partida['placar_oficial_visitante'],
-                'valida': partida['valida']
-            }
-        else:
-            dados_partida = {
-                'rodada_id': rodada_id,
-                'partida_id': partida['partida_id'],
-                'partida_data': partida['partida_data'],
-                'clube_mand': 'FALSO',
-                'clube_posicao': partida['clube_visitante_posicao'],
-                'clube_aproveitamento': partida['aproveitamento_visitante'],
-                'placar_oficial_mandante': partida['placar_oficial_mandante'],
-                'placar_oficial_visitante': partida['placar_oficial_visitante'],
-                'valida': partida['valida']
-            }
+                'scout_ca': scouts.get('CA', 0) if scouts is not None else 0,
+                'scout_cv': scouts.get('CV', 0) if scouts is not None else 0,
+                'scout_dp': scouts.get('DP', 0) if scouts is not None else 0,
+                'scout_fc': scouts.get('FC', 0) if scouts is not None else 0,
+                'scout_ff': scouts.get('FF', 0) if scouts is not None else 0,
+                'scout_fs': scouts.get('FS', 0) if scouts is not None else 0,
+                'scout_ft': scouts.get('FT', 0) if scouts is not None else 0,
+                'scout_g': scouts.get('G', 0) if scouts is not None else 0,
+                'scout_i': scouts.get('I', 0) if scouts is not None else 0,
+                'scout_pp': scouts.get('PP', 0) if scouts is not None else 0,
+                'scout_ps': scouts.get('PS', 0) if scouts is not None else 0,
+                'scout_sg': scouts.get('SG', 0) if scouts is not None else 0
+            })
 
-        dados_partidas_adaptados.append(dados_partida)
+            # Obter informações das partidas
+            url_partidas = f'https://api.cartolafc.globo.com/partidas/{rodada_id}'
+            resposta_partidas = requests.get(url_partidas)
+            data_partidas = resposta_partidas.json()
+            if 'partidas' in data_partidas:
+                for partida in data_partidas['partidas']:
+                    mandante_id = partida['clube_casa_id']
+                    visitante_id = partida['clube_visitante_id']
+                    part_data = partida['partida_data']
+                    clube_aprov = ', '.join(partida['aproveitamento_mandante'])
+                    clube_pos = partida['clube_casa_posicao']
+                    vis_plac = partida['placar_oficial_visitante']
+                    mand_plac = partida['placar_oficial_mandante']
+                    valida = partida['valida']
+                    partidas_dados.append([mandante_id, rodada_id, part_data, clube_aprov, clube_pos, vis_plac, mand_plac, valida])
+                    partidas_dados.append([visitante_id, rodada_id, part_data, clube_aprov, clube_pos, vis_plac, mand_plac, valida])
 
-    # Criar DataFrame com os dados adaptados da tabela "Dados Partidas"
-    df_partidas = pd.DataFrame(dados_partidas_adaptados)
+# Criar DataFrame com os atributos dos atletas
+df_atletas = pd.DataFrame(atletas_dados)
 
-    # Mesclar os dados adaptados com o DataFrame principal
-    df = pd.concat([df, df_partidas], axis=1)
+# Calcular campos multiplicando a pontuação de cada scout pelo seu respectivo peso
+for scout, peso in scouts_pesos.items():
+    campo_scout = 'scout_' + scout
+    campo_pontuacao = 'pt_' + campo_scout
+    df_atletas[campo_pontuacao] = df_atletas[campo_scout] * peso
 
-    return df
+# Criar DataFrame com as informações das partidas
+colunas_partidas = ['time_id', 'rodada_id', 'partida_data', 'clube_aprov', 'clube_pos', 'vis_plac', 'mand_plac', 'valida']
+df_partidas = pd.DataFrame(partidas_dados, columns=colunas_partidas)
 
+# Calcular a pontuação total do time em cada rodada
+df_partidas['pt_time'] = df_partidas.groupby(['rodada_id', 'time_id'])['pontuacao'].transform('sum')
 
-def criar_tabela_dados_rodada_atual(tabelas):
-    """
-    Cria a tabela "Dados Rodada Atual" com base nas tabelas "Atletas mercado" e "Dados Destaque".
-    """
-    if 'Atletas mercado' in tabelas and 'Dados Destaque' in tabelas:
-        tabela_atletas = tabelas['Atletas mercado']
-        tabela_destaque = tabelas['Dados Destaque']
+# Combinar os DataFrames para ter as informações dos atletas e das partidas em uma única estrutura
+df_combined = pd.merge(df_atletas, df_partidas, on=['time_id', 'rodada_id'], how='left')
 
-        tabela_rodada_atual = tabela_atletas.copy()
-
-        # Preencher campos da tabela "Dados Rodada Atual" com base na tabela "Dados Destaque"
-        tabela_rodada_atual['rodada_dest'] = tabela_rodada_atual['atleta_id'].isin(tabela_destaque['atleta_id'])
-        tabela_rodada_atual.loc[tabela_rodada_atual['rodada_dest'], 'total_escal'] = tabela_destaque.loc[tabela_destaque['atleta_id'].isin(tabela_rodada_atual['atleta_id']), 'escalacoes']
-        tabela_rodada_atual['rodada_dest'] = tabela_rodada_atual['rodada_dest'].map({True: 'VERDADEIRO', False: 'FALSO'})
-
-        return tabela_rodada_atual
-
-    return None
-
-
-# Passo 1: Carregar os dados dos arquivos CSV
-tabelas = carregar_dados()
-
-# Passo 2: Preencher campos vazios com zero e aplicar pesos aos scouts
-preencher_campos_vazios(tabelas)
-
-# Passo 3: Criar DataFrame único com as tabelas relevantes
-df = criar_dataframe(tabelas)
-
-# Passo 4: Adaptar os dados da tabela "Dados Partidas"
-df = adaptar_dados_partidas(df, tabelas)
-
-# Passo 5: Criar tabela "Dados Rodada Atual"
-tabela_rodada_atual = criar_tabela_dados_rodada_atual(tabelas)
-
-if tabela_rodada_atual is not None:
-    print('Limpeza dos dados concluída. Os arquivos CSV limpos foram salvos.')
-    print('DataFrame consolidado:')
-    print(df.head())
-    print('Tabela "Dados Rodada Atual":')
-    print(tabela_rodada_atual.head())
-
-    # Criar arquivo do Excel com o DataFrame consolidado e a tabela de origem
-    nome_arquivo_excel = f'dados_consolidados_{pd.Timestamp.now().strftime("%Y%m%d%H%M%S")}.xlsx'
-    writer = pd.ExcelWriter(nome_arquivo_excel, engine='openpyxl')
-
-    # Exportar DataFrame consolidado
-    df.to_excel(writer, sheet_name='Dados Consolidados', index=False)
-
-    # Exportar tabela "Dados Rodada Atual"
-    tabela_rodada_atual.to_excel(writer, sheet_name='Dados Rodada Atual', index=False)
-
-    # Exportar tabela com campos/tabelas de origem
-    tabela_origem = pd.DataFrame({'Campo': df.columns, 'Tabela': df.columns})
-    tabela_origem.to_excel(writer, sheet_name='Origem dos Dados', index=False)
-
-    writer.save()
-
-    print(f'Dados exportados para o arquivo: {nome_arquivo_excel}')
-else:
-    print('Erro ao carregar tabelas. Verifique se todos os arquivos estão presentes ou se há valores ausentes nos dados.')
+# Salvar o DataFrame combinado em um arquivo CSV
+df_combined.to_csv('jogadores_partidas.csv', index=False)
