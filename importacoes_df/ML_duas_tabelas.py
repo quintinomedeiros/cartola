@@ -18,12 +18,19 @@ scouts_pesos = {
 }
 
 # Função para calcular a pontuação ponderada dos scouts
-def calcular_pontuacao_scout(scouts, scouts_pesos):
-    if scouts is None:
-        return {f'pt_scout_{scout}': 0 for scout in scouts_pesos.keys()}
+def calcular_pontuacao_scout(atleta_id, rodada_id, scouts_pesos):
+    # URL da API para obter as informações dos scouts do atleta para a rodada
+    url_scouts = f'{url_base}/atletas/{atleta_id}/pontuacao/{rodada_id}'
+    resposta_scouts = requests.get(url_scouts)
+    data_scouts = resposta_scouts.json()
 
-    scout_values = get_scout_values(scouts, scouts_pesos.keys())
-    scouts_ponderados = {f'pt_scout_{scout}': valor * scouts_pesos[scout] for scout, valor in scout_values.items()}
+    if 'scout' in data_scouts:
+        scouts_atleta = data_scouts['scout']
+        scouts_frequencias = {scout: scouts_atleta.get(scout, 0) for scout in scouts_pesos.keys()}
+    else:
+        scouts_frequencias = {scout: 0 for scout in scouts_pesos.keys()}
+
+    scouts_ponderados = {scout: scouts_frequencias[scout] * scouts_pesos[scout] for scout in scouts_pesos.keys()}
 
     return scouts_ponderados
 
@@ -68,6 +75,10 @@ for rodada_id in range(1, ultima_rodada_finalizada + 1):
     if isinstance(data_pontuados, dict) and 'atletas' in data_pontuados:
         atletas_pontuados = data_pontuados['atletas']
         for atleta_id, atleta_data in atletas_pontuados.items():
+            # Calcular a pontuação ponderada dos scouts para o atleta na rodada
+            scouts_ponderados = calcular_pontuacao_scout(atleta_id, rodada_id, scouts_pesos)
+            # Atualizar os valores dos scouts ponderados no dicionário do atleta
+            atleta_data.update(scouts_ponderados)
             atleta_pontuado = {
                 'atleta_id': int(atleta_id),
                 'posicao_id': atleta_data['posicao_id'],
